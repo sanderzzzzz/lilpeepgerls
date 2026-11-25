@@ -1,0 +1,1264 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MIAMI RUN // VICE CHASE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:ital,wght@0,700;0,900;1,900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #160624;
+      font-family: 'Rubik', sans-serif;
+    }
+
+    /* High-resolution semi-pixelated canvas (640x360 logical grid) */
+    #sceneCanvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: -webkit-crisp-edges;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* ==========================================================================
+       VICE CITY / MIAMI SUNSET START OVERLAY (SLIDES UP ON PLAY)
+       ========================================================================== */
+    #startOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(
+        180deg,
+        rgba(24, 6, 42, 0.72) 0%,
+        rgba(116, 20, 88, 0.62) 48%,
+        rgba(255, 102, 82, 0.68) 100%
+      );
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.8s ease;
+    }
+
+    #startOverlay.slide-up {
+      transform: translateY(-105%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .vice-card {
+      position: relative;
+      background: linear-gradient(180deg, rgba(22, 6, 38, 0.88) 0%, rgba(56, 12, 68, 0.9) 100%);
+      border: 3px solid #ff71ce;
+      border-radius: 16px;
+      padding: clamp(26px, 5vw, 46px) clamp(26px, 6vw, 60px);
+      text-align: center;
+      max-width: 92vw;
+      box-shadow:
+        0 0 0 3px rgba(1, 205, 254, 0.35),
+        0 18px 50px rgba(0, 0, 0, 0.65),
+        0 0 35px rgba(255, 113, 206, 0.55);
+    }
+
+    .vice-tag {
+      display: inline-block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(9px, 1.5vw, 11px);
+      color: #01cdfe;
+      letter-spacing: 2px;
+      padding: 6px 14px;
+      margin-bottom: 16px;
+      border-radius: 999px;
+      background: rgba(1, 205, 254, 0.14);
+      border: 1.5px solid rgba(1, 205, 254, 0.7);
+      text-shadow: 0 0 8px rgba(1, 205, 254, 0.8);
+    }
+
+    .vice-title {
+      font-family: 'Rubik', sans-serif;
+      font-weight: 900;
+      font-style: italic;
+      font-size: clamp(34px, 7vw, 68px);
+      line-height: 0.96;
+      letter-spacing: -1px;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #fffb96 0%, #ff9e44 48%, #ff3f8e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 4px 0 #260638) drop-shadow(0 0 22px rgba(255, 85, 155, 0.7));
+      margin-bottom: 10px;
+    }
+
+    .vice-subtitle {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(11px, 2vw, 15px);
+      color: #ffd1e8;
+      letter-spacing: 3px;
+      margin-bottom: 30px;
+      text-shadow: 2px 2px 0 #240636;
+    }
+
+    #playBtn {
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(15px, 2.6vw, 22px);
+      color: #1f0530;
+      background: linear-gradient(180deg, #fffb96 0%, #ff9e44 50%, #ff528e 100%);
+      border: 3px solid #ffffff;
+      border-radius: 12px;
+      padding: clamp(15px, 2.4vw, 20px) clamp(32px, 5vw, 52px);
+      box-shadow:
+        0 6px 0 #9e1455,
+        0 12px 28px rgba(255, 82, 142, 0.75);
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.15s ease;
+      animation: neonPulse 1.8s infinite alternate;
+    }
+
+    #playBtn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-2px);
+      box-shadow:
+        0 8px 0 #9e1455,
+        0 16px 34px rgba(255, 251, 150, 0.85);
+    }
+
+    #playBtn:active {
+      transform: translateY(4px);
+      box-shadow:
+        0 2px 0 #9e1455,
+        0 4px 12px rgba(255, 82, 142, 0.6);
+    }
+
+    @keyframes neonPulse {
+      from {
+        box-shadow: 0 6px 0 #9e1455, 0 0 18px rgba(255, 113, 206, 0.65);
+      }
+      to {
+        box-shadow: 0 6px 0 #9e1455, 0 0 34px rgba(255, 251, 150, 0.95);
+      }
+    }
+
+    .track-label {
+      margin-top: 22px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(8px, 1.3vw, 10px);
+      color: #ff9ebb;
+      letter-spacing: 1px;
+      opacity: 0.9;
+    }
+
+    /* ==========================================================================
+       HUD УПРАВЛЕНИЯ ЗВУКОМ ПОСЛЕ ЗАПУСКА
+       ========================================================================== */
+    #hudBar {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease 0.4s;
+    }
+
+    #hudBar.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .hud-pill {
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: #fffb96;
+      background: rgba(24, 6, 40, 0.78);
+      border: 2px solid #ff71ce;
+      border-radius: 10px;
+      padding: 10px 14px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: border-color 0.15s, color 0.15s, transform 0.1s;
+    }
+
+    .hud-pill:hover {
+      border-color: #01cdfe;
+      color: #01cdfe;
+    }
+
+    .hud-pill:active {
+      transform: scale(0.96);
+    }
+
+    #nowPlayingPill {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      z-index: 20;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(8px, 1.3vw, 10px);
+      color: #fffb96;
+      background: rgba(24, 6, 40, 0.75);
+      border: 2px solid #ff9e44;
+      border-radius: 10px;
+      padding: 9px 14px;
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease 0.5s;
+    }
+
+    #nowPlayingPill.visible {
+      opacity: 1;
+    }
+
+    /* Едва заметная CRT/VHS текстура для атмосферы Vice City */
+    .vhs-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 12;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent 58%, rgba(16, 3, 28, 0.35) 100%);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Аудиофайл в корне рядом с index.html -->
+  <audio id="bgMusic" src="./LilPeepGirls.mp3" preload="auto" loop playsinline></audio>
+
+  <!-- Высокодетализированный полупиксельный холст -->
+  <canvas id="sceneCanvas"></canvas>
+
+  <!-- Мягкая виньетка -->
+  <div class="vhs-overlay"></div>
+
+  <!-- Кнопка звука -->
+  <div id="hudBar">
+    <button id="muteBtn" class="hud-pill" type="button" title="Звук">
+      <span id="muteIcon">🔊</span>
+      <span id="muteText">SOUND ON</span>
+    </button>
+  </div>
+
+  <!-- Индикатор трека -->
+  <div id="nowPlayingPill">♪ LIL PEEP - GIRLS</div>
+
+  <!-- Стартовый экран -->
+  <div id="startOverlay">
+    <div class="vice-card">
+      <div class="vice-tag">★ OCEAN DRIVE • 1986 ★</div>
+      <h1 class="vice-title">MIAMI<br>SUNSET</h1>
+      <div class="vice-subtitle">АНГЕЛИНА</div>
+      <button id="playBtn" type="button">
+        <span>▶</span>
+        <span>PLAY</span>
+      </button>
+      <div class="track-label">♪ LIL PEEP — GIRLS</div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ============================================================================
+     * HIGH-DETAIL 16/32-BIT SEMI-PIXEL MIAMI CHASE (GTA VICE CITY / JDM SPRITE ART)
+     * ============================================================================
+     * Разрешение холста: 360px по высоте (адаптивная ширина ~640-780px),
+     * что даёт детализацию уровня Pixel Car Racer / Neo Geo / GTA Vice City:
+     * - Чёткие тёмные контуры кузова (1px), многоступенчатые блики и тени,
+     *   детализированные многоспицевые диски, суппорты, бамперы, воздухозаборники,
+     *   зеркала заднего вида, спойлер и интерьер.
+     * - Крупный план погони: розовый JDM спорткар впереди справа и полицейский
+     *   перехватчик прямо за ним слева, едущие близко к камере.
+     */
+    (function () {
+      const canvas = document.getElementById('sceneCanvas');
+      const ctx = canvas.getContext('2d');
+
+      const startOverlay = document.getElementById('startOverlay');
+      const playBtn = document.getElementById('playBtn');
+      const bgMusic = document.getElementById('bgMusic');
+      const hudBar = document.getElementById('hudBar');
+      const muteBtn = document.getElementById('muteBtn');
+      const muteIcon = document.getElementById('muteIcon');
+      const muteText = document.getElementById('muteText');
+      const nowPlayingPill = document.getElementById('nowPlayingPill');
+
+      // Высокое логическое разрешение для полупиксельной детализации (360p)
+      const LOGICAL_H = 360;
+      let logicalW = 640;
+
+      // Состояние анимации
+      let isStarted = false;
+      let isMuted = false;
+      let speedFactor = 0.55;
+      let targetSpeedFactor = 0.55;
+      let time = 0;
+
+      // Скролл слоёв параллакса
+      let cityScroll = 0;
+      let midPalmScroll = 0;
+      let roadScroll = 0;
+      let railScroll = 0;
+      let forePalmScroll = 0;
+
+      function resizeCanvas() {
+        const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+        logicalW = Math.max(460, Math.min(860, Math.round(LOGICAL_H * aspect)));
+        canvas.width = logicalW;
+        canvas.height = LOGICAL_H;
+        ctx.imageSmoothingEnabled = false;
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      // Примитивы для чистого полупиксельного рендеринга
+      function rect(x, y, w, h, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+      }
+
+      function poly(points, fill, stroke = null, lineWidth = 1) {
+        ctx.beginPath();
+        ctx.moveTo(Math.round(points[0][0]), Math.round(points[0][1]));
+        for (let i = 1; i < points.length; i++) {
+          ctx.lineTo(Math.round(points[i][0]), Math.round(points[i][1]));
+        }
+        ctx.closePath();
+        if (fill) {
+          ctx.fillStyle = fill;
+          ctx.fill();
+        }
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = lineWidth;
+          ctx.stroke();
+        }
+      }
+
+      // Генерация облаков и зданий Майами
+      const clouds = [
+        { x: 40, y: 42, w: 96, h: 18, spd: 5 },
+        { x: 220, y: 28, w: 130, h: 22, spd: 3.5 },
+        { x: 430, y: 52, w: 105, h: 17, spd: 6 },
+        { x: 610, y: 34, w: 118, h: 20, spd: 4.2 }
+      ];
+
+      const skyline = [];
+      (function buildSkyline() {
+        const colors = ['#381052', '#4c1468', '#621978', '#2d0c44', '#741e82'];
+        const neons = ['#ff71ce', '#01cdfe', '#fffb96', '#ff9e44'];
+        let xCursor = 0;
+        for (let i = 0; i < 42; i++) {
+          const w = 22 + ((i * 11) % 28);
+          const h = 38 + ((i * 23) % 82);
+          skyline.push({
+            x: xCursor,
+            w,
+            h,
+            color: colors[i % colors.length],
+            neon: neons[i % neons.length],
+            style: i % 3, // 0: modern, 1: art deco step, 2: spire
+            seed: i * 17
+          });
+          xCursor += w - 3;
+        }
+        skyline.totalWidth = xCursor;
+      })();
+
+      /**
+       * 1. НЕБО, БОЛЬШОЕ ЗАКАТНОЕ СОЛНЦЕ И ОБЛАКА МАЙАМИ
+       */
+      function drawSky() {
+        const horizonY = 202;
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+        skyGrad.addColorStop(0.0, '#2c0b47');
+        skyGrad.addColorStop(0.26, '#7a1c6c');
+        skyGrad.addColorStop(0.54, '#d93f7a');
+        skyGrad.addColorStop(0.78, '#ff7854');
+        skyGrad.addColorStop(1.0, '#ffd966');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, logicalW, horizonY);
+
+        // Солнце в левой-центральной части неба
+        const sunX = Math.round(logicalW * 0.32);
+        const sunY = 148;
+        const sunR = 66;
+
+        // Ореол вокруг солнца
+        const halo = ctx.createRadialGradient(sunX, sunY, sunR * 0.6, sunX, sunY, sunR * 1.75);
+        halo.addColorStop(0, 'rgba(255, 224, 115, 0.35)');
+        halo.addColorStop(0.5, 'rgba(255, 113, 150, 0.16)');
+        halo.addColorStop(1, 'rgba(255, 113, 150, 0)');
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, sunR * 1.75, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Построчное ретро-солнце с фирменными полосками у горизонта
+        for (let dy = -sunR; dy <= sunR; dy++) {
+          const y = sunY + dy;
+          if (y >= horizonY) continue;
+
+          // Горизонтальные полосы-вырезы в нижней части солнца
+          if (dy > 14) {
+            const band = Math.floor((dy - 14) / 9);
+            const inBand = (dy - 14) % 9;
+            if (inBand >= 7 - Math.min(4, band)) continue;
+          }
+
+          const halfW = Math.round(Math.sqrt(sunR * sunR - dy * dy));
+          let c = '#fffb96';
+          if (dy > -12) c = '#ffe36e';
+          if (dy > 8) c = '#ffa959';
+          if (dy > 26) c = '#ff6b7a';
+          if (dy > 44) c = '#ff388c';
+
+          rect(sunX - halfW, y, halfW * 2, 1, c);
+        }
+
+        // Детализированные слоистые облака в стиле Vice City
+        clouds.forEach((cl) => {
+          const span = logicalW + 180;
+          const cx = ((cl.x - time * cl.spd * 0.7) % span + span) % span - 110;
+          const cy = cl.y;
+          // Нижняя фиолетово-розовая тень облака
+          rect(cx + 4, cy + 7, cl.w, cl.h - 4, 'rgba(110, 22, 86, 0.5)');
+          // Средний слой
+          rect(cx, cy + 4, cl.w, cl.h - 5, '#ff99bb');
+          rect(cx + 10, cy + 1, cl.w - 22, 6, '#ffc8dd');
+          // Верхняя светлая шапка
+          rect(cx + 22, cy - 3, Math.max(18, cl.w - 46), 5, '#ffe8f0');
+          // Тёплый золотой контур снизу
+          rect(cx + 6, cy + cl.h - 2, cl.w - 12, 2, '#ffc478');
+        });
+      }
+
+      /**
+       * 2. ГОРОД НА ЗАДНЕМ ФОНЕ (УЕЗЖАЕМ ИЗ МАЙАМИ), ЗАЛИВ И ПАЛЬМЫ
+       */
+      function drawCityAndWater() {
+        const horizonY = 198;
+        const totalW = skyline.totalWidth;
+        const shift = Math.floor(cityScroll) % totalW;
+
+        for (let pass = -1; pass <= 2; pass++) {
+          const baseX = pass * totalW - shift;
+          for (let i = 0; i < skyline.length; i++) {
+            const b = skyline[i];
+            const bx = baseX + b.x;
+            if (bx + b.w < -20 || bx > logicalW + 20) continue;
+
+            const by = horizonY - b.h;
+            // Основной корпус небоскрёба
+            rect(bx, by, b.w, b.h, b.color);
+            // Тёмный пиксельный контур справа и сверху
+            rect(bx + b.w - 1, by, 1, b.h, '#1d062e');
+            rect(bx, by, b.w, 1, '#1d062e');
+            // Закатный рефлекс на левой грани
+            rect(bx + 1, by + 1, 3, b.h - 1, '#9d2b7d');
+
+            // Архитектурные детали крыш
+            if (b.style === 1) {
+              // Art Deco ступенька
+              rect(bx + 4, by - 6, b.w - 8, 6, b.color);
+              rect(bx + 4, by - 6, b.w - 8, 1, b.neon);
+            } else if (b.style === 2) {
+              // Антенна / шпиль с маячком
+              const mid = bx + Math.floor(b.w / 2);
+              rect(mid, by - 14, 2, 14, b.neon);
+              rect(mid - 1, by - 16, 4, 3, '#fffb96');
+            }
+
+            // Неоновая вывеска под крышей
+            rect(bx + 2, by + 3, b.w - 4, 2, b.neon);
+
+            // Окна небоскрёба
+            for (let wy = by + 9; wy < horizonY - 6; wy += 6) {
+              for (let wx = bx + 5; wx < bx + b.w - 5; wx += 6) {
+                if (((wx + wy + b.seed) % 7) !== 0) {
+                  const wc = ((wx + b.seed) % 3 === 0) ? '#fffb96' : '#01cdfe';
+                  rect(wx, wy, 3, 3, wc);
+                }
+              }
+            }
+          }
+        }
+
+        // Океанский залив (Y: 198..226)
+        const bayGrad = ctx.createLinearGradient(0, horizonY, 0, 226);
+        bayGrad.addColorStop(0, '#c93873');
+        bayGrad.addColorStop(0.55, '#681a6b');
+        bayGrad.addColorStop(1, '#320f4a');
+        ctx.fillStyle = bayGrad;
+        ctx.fillRect(0, horizonY, logicalW, 28);
+
+        // Солнечная дорожка бликов на воде
+        const sunX = Math.round(logicalW * 0.32);
+        for (let wy = horizonY + 2; wy < 225; wy += 3) {
+          const wave = Math.sin(time * 4.5 + wy * 0.6) * 7;
+          const wLen = Math.max(12, 74 - (wy - horizonY) * 2.1);
+          rect(sunX - wLen / 2 + wave, wy, wLen, 1, '#ffbe76');
+          if (wy % 6 === 0) {
+            rect(sunX - wLen * 0.35 - wave, wy + 1, wLen * 0.7, 1, '#fffb96');
+          }
+        }
+
+        // Дальний ряд пальм вдоль набережной
+        const spacing = 78;
+        const pShift = Math.floor(midPalmScroll) % spacing;
+        for (let x = -pShift - 30; x < logicalW + 60; x += spacing) {
+          drawDetailedPalm(x, 226, 0.68, '#260838', '#3c0f54', '#5c1778');
+        }
+      }
+
+      /**
+       * Детализированная пиксельная пальма с многотоновыми листьями
+       */
+      function drawDetailedPalm(baseX, baseY, scale, trunkDark, leafDark, leafLight) {
+        const h = Math.round(62 * scale);
+        // Изогнутый сегментированный ствол
+        for (let i = 0; i < h; i++) {
+          const bend = Math.round(Math.sin((i / h) * 1.45) * 9 * scale);
+          const thickness = Math.max(2, Math.round((5 - (i / h) * 2.4) * scale));
+          rect(baseX + bend, baseY - i, thickness, 1, trunkDark);
+          if (i % 4 === 0 && thickness >= 3) {
+            rect(baseX + bend, baseY - i, 1, 1, leafLight);
+          }
+        }
+
+        const topX = baseX + Math.round(Math.sin(1.45) * 9 * scale);
+        const topY = baseY - h;
+        const span = Math.round(26 * scale);
+
+        // Пышные перистые ветви пальмы
+        const branches = [
+          { dx: -span, dy: 6, w: span, h: 3 },
+          { dx: -Math.round(span * 1.1), dy: 11, w: Math.round(span * 0.85), h: 3 },
+          { dx: -Math.round(span * 0.8), dy: -3, w: Math.round(span * 0.8), h: 3 },
+          { dx: 2, dy: 6, w: span, h: 3 },
+          { dx: Math.round(span * 0.25), dy: 11, w: Math.round(span * 0.85), h: 3 },
+          { dx: 2, dy: -3, w: Math.round(span * 0.8), h: 3 },
+          { dx: -6, dy: -7, w: 14, h: 3 }
+        ];
+
+        branches.forEach((br) => {
+          rect(topX + br.dx, topY + br.dy, br.w, br.h, leafDark);
+          rect(topX + br.dx + 1, topY + br.dy, Math.max(2, br.w - 2), 1, leafLight);
+        });
+      }
+
+      /**
+       * 3. ШОССЕ МАЙАМИ (КРУПНЫЙ ПЛАН ДОРОГИ)
+       */
+      function drawHighway() {
+        // Зелёно-фиолетовая полоса набережной + неоновый отбойник (Y: 226..244)
+        rect(0, 226, logicalW, 18, '#260b38');
+        rect(0, 226, logicalW, 2, '#ff71ce');
+
+        // Металлический отбойник вдоль дороги с бегущими стойками
+        rect(0, 232, logicalW, 4, '#8d99ae');
+        rect(0, 232, logicalW, 1, '#edf2f4');
+        rect(0, 235, logicalW, 1, '#2b2d42');
+
+        const postStep = 44;
+        const rShift = Math.floor(railScroll) % postStep;
+        for (let x = -rShift; x < logicalW + postStep; x += postStep) {
+          rect(x, 231, 3, 10, '#4a4e69');
+          rect(x, 231, 1, 10, '#bfc0c0');
+        }
+
+        // Тротуар и неоновый бордюр (Y: 240..246)
+        rect(0, 240, logicalW, 5, '#4b2059');
+        rect(0, 245, logicalW, 2, '#01cdfe');
+
+        // Широкое асфальтовое шоссе (Y: 247..342)
+        const roadGrad = ctx.createLinearGradient(0, 247, 0, 342);
+        roadGrad.addColorStop(0, '#2a183b');
+        roadGrad.addColorStop(0.5, '#1f112c');
+        roadGrad.addColorStop(1, '#160b21');
+        ctx.fillStyle = roadGrad;
+        ctx.fillRect(0, 247, logicalW, 95);
+
+        // Тонкая текстура асфальта (лёгкая зернистость)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+        const grainShift = Math.floor(roadScroll * 1.1) % 60;
+        for (let gx = -grainShift; gx < logicalW; gx += 60) {
+          rect(gx, 265, 14, 1, 'rgba(255,255,255,0.04)');
+          rect(gx + 28, 315, 18, 1, 'rgba(255,255,255,0.04)');
+        }
+
+        // Двойная разделительная линия / прерывистая разметка по центру полос (Y: 292)
+        const dashPeriod = 76;
+        const dashOffset = Math.floor(roadScroll) % dashPeriod;
+        for (let x = -dashOffset; x < logicalW + dashPeriod; x += dashPeriod) {
+          rect(x, 291, 40, 3, '#fffb96');
+          rect(x, 294, 40, 2, '#ff9e44');
+        }
+
+        // Нижняя неоновая полоса у края экрана (Y: 342..360)
+        rect(0, 342, logicalW, 3, '#ff71ce');
+        rect(0, 345, logicalW, 15, '#12041c');
+      }
+
+      /**
+       * УТИЛИТА: ДЕТАЛИЗИРОВАННОЕ МНОГОСПИЦЕВОЕ КОЛЕСО (КАК НА РЕФЕРЕНСЕ GT86)
+       * Диаметр ~28-30px: чёткий тёмный контур, низкопрофильная шина,
+       * серебристо-белый обод, спицы, тормозной диск и цветной суппорт.
+       */
+      function drawDetailedWheel(cx, cy, radius, spinAngle, caliperColor = '#ff2a85') {
+        const x = Math.round(cx);
+        const y = Math.round(cy);
+        const r = Math.round(radius);
+
+        // 1. Внешний контур и покрышка
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#0d0714';
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#050208';
+        ctx.stroke();
+
+        // Тёмно-серый блик на боковине резины
+        ctx.beginPath();
+        ctx.arc(x, y, r - 2, Math.PI * 1.1, Math.PI * 1.85);
+        ctx.strokeStyle = '#2c2538';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 2. Внутренняя полость диска и тормозной суппорт
+        const rimR = r - 4;
+        ctx.beginPath();
+        ctx.arc(x, y, rimR, 0, Math.PI * 2);
+        ctx.fillStyle = '#1d1b26';
+        ctx.fill();
+
+        // Яркий тормозной суппорт (виден сквозь спицы!)
+        rect(x + 2, y - 4, 4, 5, caliperColor);
+
+        // 3. Серебристый обод диска
+        ctx.beginPath();
+        ctx.arc(x, y, rimR, 0, Math.PI * 2);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+
+        // 4. Вращающиеся 6 спиц диска
+        const spokes = 6;
+        for (let i = 0; i < spokes; i++) {
+          const a = spinAngle + (i * Math.PI * 2) / spokes;
+          const sx = x + Math.cos(a) * (rimR - 1);
+          const sy = y + Math.sin(a) * (rimR - 1);
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(Math.round(sx), Math.round(sy));
+          ctx.strokeStyle = (i % 2 === 0) ? '#f8fafc' : '#94a3b8';
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+        }
+
+        // 5. Центральная ступица колеса
+        rect(x - 2, y - 2, 4, 4, '#0f172a');
+        rect(x - 1, y - 1, 2, 2, '#f8fafc');
+      }
+
+      /**
+       * 4. ПОЛИЦЕЙСКИЙ ПЕРЕХВАТЧИК С МИГАЛКАМИ (КРУПНЫЙ ПЛАН, ПРЕСЛЕДУЕТ СЛЕВА)
+       * Выполнен в полупиксельной 16/32-битной стилистике с чёткими контурами,
+       * многотоновой покраской, кенгурятником, фарами и вспышками мигалок.
+       */
+      function drawHighDetailPoliceCar(x, y, bounce, sirenFlip) {
+        const bx = Math.round(x);
+        const by = Math.round(y + bounce);
+
+        // Тень на асфальте под машиной
+        rect(bx + 6, y + 51, 146, 8, 'rgba(6, 1, 14, 0.82)');
+
+        // Отсвет мигалок на дороге
+        const roadGlow = sirenFlip ? 'rgba(255, 24, 84, 0.28)' : 'rgba(1, 205, 254, 0.28)';
+        rect(bx - 10, y + 48, 178, 12, roadGlow);
+
+        // Задний спойлер
+        poly([
+          [bx + 4, by + 18],
+          [bx + 16, by + 18],
+          [bx + 14, by + 13],
+          [bx + 2, by + 13]
+        ], '#14192d', '#070912', 1.5);
+        rect(bx + 3, by + 13, 11, 1, '#475569');
+
+        // Основной силуэт кузова (агрессивный перехватчик в профиль 3/4)
+        poly([
+          [bx + 6, by + 38],   // Задний низ
+          [bx + 6, by + 23],   // Заднее крыло
+          [bx + 20, by + 19],  // Багажник
+          [bx + 42, by + 7],   // Задняя стойка крыши
+          [bx + 86, by + 7],   // Передняя стойка крыши
+          [bx + 112, by + 20], // Основание лобового стекла
+          [bx + 150, by + 24], // Капот
+          [bx + 156, by + 32], // Нос бампера
+          [bx + 154, by + 42], // Нижний сплиттер
+          [bx + 8, by + 42]    // Порог
+        ], '#14192d', '#070912', 1.8);
+
+        // Белые полицейские двери (фирменная ливрея Miami Metro)
+        poly([
+          [bx + 44, by + 20],
+          [bx + 98, by + 20],
+          [bx + 96, by + 40],
+          [bx + 44, by + 40]
+        ], '#f1f5f9', '#070912', 1.2);
+
+        // Световой блик вдоль верхней кромки кузова
+        rect(bx + 22, by + 20, 88, 2, '#94a3b8');
+        rect(bx + 114, by + 22, 34, 2, '#475569');
+
+        // Полицейская полоса и золотая звезда шерифа на двери
+        rect(bx + 45, by + 28, 52, 3, '#01cdfe');
+        rect(bx + 45, by + 31, 52, 1, '#0284c7');
+        rect(bx + 66, by + 26, 8, 7, '#fbbf24');
+        rect(bx + 68, by + 28, 4, 3, '#fef08a');
+
+        // Окна салона (тонированные сине-серые с бликами)
+        // Заднее боковое окно
+        poly([
+          [bx + 44, by + 10],
+          [bx + 64, by + 10],
+          [bx + 64, by + 19],
+          [bx + 32, by + 19]
+        ], '#1e293b', '#070912', 1.2);
+
+        // Переднее боковое окно
+        poly([
+          [bx + 68, by + 10],
+          [bx + 87, by + 10],
+          [bx + 103, by + 19],
+          [bx + 68, by + 19]
+        ], '#263654', '#070912', 1.2);
+        // Блик на стекле
+        poly([
+          [bx + 73, by + 11],
+          [bx + 80, by + 11],
+          [bx + 86, by + 18],
+          [bx + 79, by + 18]
+        ], 'rgba(125, 211, 252, 0.35)');
+
+        // Боковое зеркало
+        rect(bx + 96, by + 17, 7, 4, '#f8fafc');
+        rect(bx + 96, by + 17, 7, 1, '#070912');
+
+        // Передний силовой бампер (Push-bar) и решётка радиатора
+        rect(bx + 152, by + 27, 6, 14, '#0f172a');
+        rect(bx + 155, by + 26, 3, 15, '#64748b');
+        rect(bx + 155, by + 29, 3, 2, '#e2e8f0');
+        rect(bx + 155, by + 35, 3, 2, '#e2e8f0');
+
+        // Передняя агрессивная фара и луч света
+        poly([
+          [bx + 140, by + 25],
+          [bx + 153, by + 26],
+          [bx + 151, by + 30],
+          [bx + 138, by + 29]
+        ], '#fffb96', '#070912', 1);
+
+        // Луч дальнего света в сторону розовой машины
+        const beamGrad = ctx.createLinearGradient(bx + 154, by + 28, bx + 225, by + 34);
+        beamGrad.addColorStop(0, 'rgba(255, 251, 150, 0.48)');
+        beamGrad.addColorStop(1, 'rgba(255, 251, 150, 0)');
+        poly([
+          [bx + 154, by + 26],
+          [bx + 225, by + 20],
+          [bx + 225, by + 46],
+          [bx + 154, by + 31]
+        ], beamGrad);
+
+        // Задний фонарь
+        rect(bx + 5, by + 24, 4, 5, '#ff1e56');
+        rect(bx + 5, by + 25, 2, 2, '#ffb3c6');
+
+        // МИГАЛКИ НА КРЫШЕ (ЛЮСТРА) + ЯРКИЕ ВСПЫШКИ
+        rect(bx + 56, by + 4, 24, 3, '#1e293b');
+        if (sirenFlip) {
+          // Красная вспышка
+          rect(bx + 56, by + 2, 11, 3, '#ff1e56');
+          rect(bx + 58, by + 2, 7, 1, '#ffd1dc');
+          rect(bx + 69, by + 3, 11, 2, '#0369a1');
+
+          const redFlash = ctx.createRadialGradient(bx + 61, by + 3, 2, bx + 61, by + 3, 34);
+          redFlash.addColorStop(0, 'rgba(255, 30, 86, 0.85)');
+          redFlash.addColorStop(0.4, 'rgba(255, 30, 86, 0.32)');
+          redFlash.addColorStop(1, 'rgba(255, 30, 86, 0)');
+          ctx.fillStyle = redFlash;
+          ctx.beginPath();
+          ctx.arc(bx + 61, by + 3, 34, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Синяя вспышка
+          rect(bx + 56, by + 3, 11, 2, '#881337');
+          rect(bx + 69, by + 2, 11, 3, '#01cdfe');
+          rect(bx + 71, by + 2, 7, 1, '#e0f2fe');
+
+          const blueFlash = ctx.createRadialGradient(bx + 74, by + 3, 2, bx + 74, by + 3, 34);
+          blueFlash.addColorStop(0, 'rgba(1, 205, 254, 0.85)');
+          blueFlash.addColorStop(0.4, 'rgba(1, 205, 254, 0.32)');
+          blueFlash.addColorStop(1, 'rgba(1, 205, 254, 0)');
+          ctx.fillStyle = blueFlash;
+          ctx.beginPath();
+          ctx.arc(bx + 74, by + 3, 34, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Колёсные арки и детализированные многоспицевые колёса
+        ctx.beginPath();
+        ctx.arc(bx + 32, by + 40, 15, Math.PI, 0);
+        ctx.fillStyle = '#070912';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(bx + 126, by + 40, 15, Math.PI, 0);
+        ctx.fillStyle = '#070912';
+        ctx.fill();
+
+        drawDetailedWheel(bx + 32, by + 40, 13, time * 24, '#01cdfe');
+        drawDetailedWheel(bx + 126, by + 40, 13, time * 24, '#01cdfe');
+      }
+
+      /**
+       * 5. ГЛАВНЫЙ РОЗОВЫЙ JDM СПОРТКАР (В СТИЛЕ TOYOTA GT86 / SUPRA СО СКРИНШОТА)
+       * И АНГЕЛИНА ЗА РУЛЁМ С РАЗВЕВАЮЩИМИСЯ БЕЛЫМИ ВОЛОСАМИ!
+       *
+       * Детализация кузова:
+       * - Чёткий тёмный контур 1.8px вокруг всех панелей кузова
+       * - Глянцевый нежно-розовый / неоново-розовый окрас с 4 градациями света и тени
+       * - Спортивный обвес: передний сплиттер, агрессивные воздухозаборники бампера,
+       *   жабры на переднем крыле, боковая юбка, задний спойлер GT-wing
+       * - Открытое боковое окно, через которое крупно видно женское лицо Ангелины
+       *   (голубые глаза, румянец, аккуратный профиль) и длинные прямые платиново-белые
+       *   волосы, эффектно развевающиеся потоком ветра назад!
+       */
+      function drawHeroJdmPinkCar(x, y, bounce) {
+        const bx = Math.round(x);
+        const by = Math.round(y + bounce);
+
+        // Тень на асфальте и розовая неоновая подсветка днища
+        rect(bx + 6, y + 53, 174, 8, 'rgba(6, 1, 14, 0.85)');
+        rect(bx + 14, y + 50, 158, 7, 'rgba(255, 42, 133, 0.36)');
+
+        // --- 1. ЗАДНИЙ СПОЙЛЕР (JDM GT-WING) ---
+        poly([
+          [bx + 8, by + 20],
+          [bx + 14, by + 20],
+          [bx + 12, by + 11],
+          [bx + 7, by + 11]
+        ], '#9d174d', '#14041c', 1.4);
+        poly([
+          [bx + 1, by + 10],
+          [bx + 21, by + 11],
+          [bx + 19, by + 14],
+          [bx + 0, by + 13]
+        ], '#ff71ce', '#14041c', 1.5);
+        rect(bx + 2, by + 11, 17, 1, '#ffd6ec');
+
+        // --- 2. ОСНОВНОЙ КУЗОВ СПОРТКАРА (СИЛУЭТ GT86 / SUPRA) ---
+        poly([
+          [bx + 6, by + 40],    // Задний диффузор
+          [bx + 5, by + 25],    // Задний бампер верх
+          [bx + 18, by + 20],   // Заднее крыло
+          [bx + 46, by + 7],    // Покатая крыша (задняя стойка)
+          [bx + 94, by + 7],    // Крыша (верх лобового стекла)
+          [bx + 124, by + 21],  // Основание лобового стекла / капот
+          [bx + 168, by + 25],  // Низкий спортивный нос
+          [bx + 178, by + 33],  // Передний бампер
+          [bx + 180, by + 43],  // Передний карбоновый сплиттер
+          [bx + 6, by + 43]     // Боковая юбка
+        ], '#ff4d9e', '#14041c', 2.0);
+
+        // Верхняя глянцевая световая полоса вдоль крыши, крыла и капота
+        poly([
+          [bx + 47, by + 8],
+          [bx + 93, by + 8],
+          [bx + 122, by + 21],
+          [bx + 165, by + 25],
+          [bx + 162, by + 27],
+          [bx + 119, by + 23],
+          [bx + 91, by + 10],
+          [bx + 48, by + 10]
+        ], '#ffb3d9');
+
+        // Средняя светлая грань кузова (плечевая линия JDM купе)
+        rect(bx + 18, by + 22, 146, 3, '#ff85c0');
+        rect(bx + 22, by + 25, 138, 2, '#ff66ad');
+
+        // Нижняя теневая часть дверей и боковая юбка
+        rect(bx + 14, by + 36, 162, 5, '#db2777');
+        // Карбоновый нижний сплиттер и порог (как на белой GT86 со скриншота!)
+        rect(bx + 8, by + 41, 172, 3, '#1e1b2e');
+        rect(bx + 16, by + 42, 158, 1, '#01cdfe'); // Неоновый кант на сплиттере
+
+        // Линия двери и ручка
+        ctx.strokeStyle = '#9d174d';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(bx + 54, by + 21);
+        ctx.lineTo(bx + 52, by + 39);
+        ctx.lineTo(bx + 106, by + 39);
+        ctx.lineTo(bx + 109, by + 22);
+        ctx.stroke();
+        // Дверная ручка
+        rect(bx + 60, by + 24, 8, 2, '#9d174d');
+        rect(bx + 61, by + 24, 6, 1, '#ffcce6');
+
+        // Боковая жабра / воздухозаборник на переднем крыле
+        poly([
+          [bx + 112, by + 24],
+          [bx + 120, by + 24],
+          [bx + 117, by + 31],
+          [bx + 110, by + 31]
+        ], '#1e1b2e', '#9d174d', 1);
+
+        // --- 3. САЛОН, ЛОБОВОЕ СТЕКЛО И АНГЕЛИНА ЗА РУЛЁМ ---
+        // Заднее боковое окошко (форточка купе)
+        poly([
+          [bx + 47, by + 10],
+          [bx + 61, by + 10],
+          [bx + 61, by + 20],
+          [bx + 34, by + 20]
+        ], '#261438', '#14041c', 1.4);
+
+        // Главный проём открытого водительского окна (крупный план салона!)
+        poly([
+          [bx + 65, by + 10],
+          [bx + 92, by + 10],
+          [bx + 114, by + 21],
+          [bx + 65, by + 21]
+        ], '#2a123d', '#14041c', 1.5);
+
+        // Спортивное красное кресло-ковш внутри салона (как на референсе GT86!)
+        poly([
+          [bx + 67, by + 13],
+          [bx + 74, by + 13],
+          [bx + 76, by + 21],
+          [bx + 67, by + 21]
+        ], '#be123c', '#14041c', 1);
+
+        // Руль справа в салоне
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(bx + 99, by + 21);
+        ctx.lineTo(bx + 96, by + 16);
+        ctx.stroke();
+
+        // === ПОРТРЕТ АНГЕЛИНЫ В ОКНЕ (КРУПНЫЙ ПОЛУПИКСЕЛЬНЫЙ ПЛАН) ===
+        const headX = bx + 81;
+        const headY = by + 11;
+
+        // Шея и плечо в стильном тёмно-розовом/чёрном топе
+        rect(headX + 2, headY + 8, 4, 3, '#f7c5b8');
+        rect(headX - 1, headY + 9, 10, 2, '#1e1b2e');
+
+        // Затылочная часть платиново-белых волос внутри салона
+        rect(headX - 3, headY + 1, 9, 9, '#f1f5f9');
+
+        // Профиль женского лица (смотрит вперёд вправо)
+        poly([
+          [headX + 2, headY + 2],
+          [headX + 9, headY + 2],
+          [headX + 10, headY + 5],
+          [headX + 9, headY + 8],
+          [headX + 3, headY + 8]
+        ], '#ffe0d6');
+
+        // Мягкая тень под подбородком и румянец на щеке
+        rect(headX + 4, headY + 6, 3, 1, '#ff8fab');
+        rect(headX + 3, headY + 8, 5, 1, '#eab6a8');
+
+        // Выразительный голубой глаз с ресничкой
+        rect(headX + 7, headY + 4, 2, 2, '#0f172a');
+        rect(headX + 8, headY + 4, 1, 2, '#01cdfe');
+        rect(headX + 7, headY + 3, 3, 1, '#1e1b2e'); // Бровь / ресницы
+
+        // Аккуратные розовые губки
+        rect(headX + 9, headY + 7, 1, 1, '#f43f5e');
+
+        // Чёлка и прядь платиново-белых волос у лица
+        rect(headX + 1, headY + 0, 9, 3, '#ffffff');
+        rect(headX + 6, headY + 2, 2, 5, '#f8fafc');
+        rect(headX + 1, headY + 0, 9, 1, '#e2e8f0');
+
+        // === ДЛИННЫЕ БЕЛЫЕ ВОЛОСЫ, РАЗВЕВАЮЩИЕСЯ НА ВЕТРУ ИЗ ОКНА НАЗАД ===
+        // 4 плавные динамические волны волос, вылетающие из окна поверх кузова!
+        const w1 = Math.sin(time * 17) * 2.2;
+        const w2 = Math.cos(time * 15 + 0.9) * 2.8;
+        const w3 = Math.sin(time * 19 + 1.8) * 3.4;
+        const w4 = Math.cos(time * 16 + 2.7) * 3.8;
+
+        // Верхняя яркая белая прядь
+        poly([
+          [headX - 1, headY + 1],
+          [headX - 14, headY + 0 + w1],
+          [headX - 28, headY + 1 + w2],
+          [headX - 42, headY + 0 + w3],
+          [headX - 52, headY + 2 + w4],
+          [headX - 40, headY + 4 + w3],
+          [headX - 26, headY + 4 + w2],
+          [headX - 12, headY + 4 + w1],
+          [headX - 1, headY + 4]
+        ], '#ffffff', '#cbd5e1', 0.7);
+
+        // Средняя густая волна платиновых волос
+        poly([
+          [headX - 2, headY + 3],
+          [headX - 15, headY + 3 + w1 * 0.9],
+          [headX - 30, headY + 4 + w2 * 1.1],
+          [headX - 45, headY + 3 + w3 * 1.1],
+          [headX - 34, headY + 7 + w3],
+          [headX - 18, headY + 7 + w2],
+          [headX - 2, headY + 6]
+        ], '#f8fafc');
+
+        // Нижняя прядь с лёгким розово-закатным бликом
+        poly([
+          [headX - 3, headY + 5],
+          [headX - 16, headY + 6 + w2],
+          [headX - 32, headY + 7 + w3],
+          [headX - 22, headY + 9 + w3],
+          [headX - 6, headY + 8 + w1]
+        ], '#ffe4f0');
+
+        // --- 4. БОКОВОЕ ЗЕРКАЛО ЗАДНЕГО ВИДА ---
+        poly([
+          [bx + 104, by + 18],
+          [bx + 113, by + 18],
+          [bx + 112, by + 22],
+          [bx + 104, by + 22]
+        ], '#ff71ce', '#14041c', 1.3);
+        rect(bx + 105, by + 19, 6, 1, '#ffd6ec');
+
+        // --- 5. ПЕРЕДНИЙ БАМПЕР, ФАРА И СВЕТ (В СТИЛЕ GT86 СО СКРИНШОТА) ---
+        // Большой чёрный спортивный воздухозаборник в переднем бампере
+        poly([
+          [bx + 158, by + 34],
+          [bx + 178, by + 34],
+          [bx + 177, by + 41],
+          [bx + 155, by + 41]
+        ], '#140c1c', '#09040d', 1.2);
+        // Горизонтальная перекладина решётки
+        rect(bx + 158, by + 37, 19, 1, '#332940');
+
+        // Боковая ниша противотуманки
+        poly([
+          [bx + 148, by + 35],
+          [bx + 154, by + 35],
+          [bx + 153, by + 40],
+          [bx + 147, by + 40]
+        ], '#140c1c');
+        rect(bx + 150, by + 37, 2, 2, '#01cdfe'); // Неоновый ДХО
+
+        // Хищная светодиодная фара GT86 / Supra
+        poly([
+          [bx + 154, by + 26],
+          [bx + 172, by + 28],
+          [bx + 169, by + 32],
+          [bx + 151, by + 30]
+        ], '#ffffff', '#14041c', 1.3);
+        rect(bx + 156, by + 28, 11, 2, '#01cdfe'); // Голубая линза фары
+        rect(bx + 167, by + 29, 3, 2, '#fffb96');
+
+        // Яркий конус света фар вперёд на асфальт
+        const heroBeam = ctx.createLinearGradient(bx + 174, by + 29, bx + 275, by + 38);
+        heroBeam.addColorStop(0, 'rgba(255, 251, 180, 0.52)');
+        heroBeam.addColorStop(1, 'rgba(255, 251, 180, 0)');
+        poly([
+          [bx + 174, by + 28],
+          [bx + 275, by + 22],
+          [bx + 275, by + 52],
+          [bx + 174, by + 33]
+        ], heroBeam);
+
+        // Задний светодиодный фонарь (габарит + стоп)
+        poly([
+          [bx + 5, by + 24],
+          [bx + 14, by + 24],
+          [bx + 12, by + 29],
+          [bx + 5, by + 29]
+        ], '#ff1e56', '#14041c', 1.2);
+        rect(bx + 6, by + 25, 5, 2, '#fffb96');
+
+        // Огненный выхлоп из титановой трубы при ускорении после PLAY!
+        if (isStarted) {
+          const flameLen = 8 + Math.sin(time * 45) * 6;
+          poly([
+            [bx + 5, by + 39],
+            [bx - flameLen, by + 40],
+            [bx + 5, by + 42]
+          ], '#01cdfe');
+          poly([
+            [bx + 5, by + 40],
+            [bx - flameLen * 0.55, by + 40.5],
+            [bx + 5, by + 41.5]
+          ], '#fffb96');
+        }
+
+        // --- 6. КОЛЁСНЫЕ АРКИ И МНОГОСПИЦЕВЫЕ СПОРТИВНЫЕ КОЛЁСА ---
+        ctx.beginPath();
+        ctx.arc(bx + 36, by + 41, 16, Math.PI, 0);
+        ctx.fillStyle = '#0d0514';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(bx + 138, by + 41, 16, Math.PI, 0);
+        ctx.fillStyle = '#0d0514';
+        ctx.fill();
+
+        drawDetailedWheel(bx + 36, by + 41, 14, time * 26, '#ff2a85');
+        drawDetailedWheel(bx + 138, by + 41, 14, time * 26, '#ff2a85');
+      }
+
+      /**
+       * 6. ПЕРЕДНИЙ ПЛАН: ЛИНИИ СКОРОСТИ И ПРОЛЕТАЮЩИЕ ПАЛЬМЫ
+       */
+      function drawForeground() {
+        // Динамические линии ветра после нажатия PLAY
+        if (isStarted) {
+          for (let i = 0; i < 8; i++) {
+            const ly = 36 + ((i * 43) % 280);
+            const lx = logicalW - (((time * (480 + i * 55) + i * 130) % (logicalW + 160)));
+            const lw = 28 + (i % 3) * 16;
+            rect(lx, ly, lw, 1, 'rgba(255, 255, 255, 0.22)');
+          }
+        }
+
+        // Крупные пальмы на самом переднем плане (проносятся мимо камеры)
+        const foreStep = 360;
+        const fShift = Math.floor(forePalmScroll) % foreStep;
+        for (let x = -fShift - 50; x < logicalW + 100; x += foreStep) {
+          drawDetailedPalm(x, 358, 1.55, '#140321', '#220636', '#3b0c59');
+        }
+      }
+
+      /**
+       * ГЛАВНЫЙ ЦИКЛ АНИМАЦИИ
+       */
+      let prevTime = performance.now();
+
+      function animate(now) {
+        const dt = Math.min(0.05, (now - prevTime) / 1000);
+        prevTime = now;
+
+        // Плавный разгон после нажатия PLAY
+        speedFactor += (targetSpeedFactor - speedFactor) * Math.min(1, dt * 3.2);
+        time += dt * speedFactor;
+
+        // Обновление координат параллакса
+        cityScroll += dt * 22 * speedFactor;
+        midPalmScroll += dt * 95 * speedFactor;
+        railScroll += dt * 340 * speedFactor;
+        roadScroll += dt * 390 * speedFactor;
+        forePalmScroll += dt * 520 * speedFactor;
+
+        ctx.clearRect(0, 0, logicalW, LOGICAL_H);
+
+        // Отрисовка сцены по слоям
+        drawSky();
+        drawCityAndWater();
+        drawHighway();
+
+        // Крупный план машин на дороге:
+        // Розовый JDM спорткар Ангелины впереди справа
+        const heroX = Math.round(logicalW * 0.52);
+        const heroY = 264;
+        const heroBounce = Math.sin(time * 26) * 0.9;
+
+        // Полицейская машина преследует плотно позади слева
+        const chaseWave = Math.sin(time * 2.4) * 12;
+        const copX = Math.round(logicalW * 0.14 + chaseWave);
+        const copY = 268;
+        const copBounce = Math.cos(time * 24) * 0.95;
+        const sirenFlip = Math.floor(time * 7.5) % 2 === 0;
+
+        drawHighDetailPoliceCar(copX, copY, copBounce, sirenFlip);
+        drawHeroJdmPinkCar(heroX, heroY, heroBounce);
+
+        drawForeground();
+
+        requestAnimationFrame(animate);
+      }
+
+      /**
+       * Нажатие PLAY: экран уезжает вверх, машины разгоняются и играет только ./LilPeepGirls.mp3
+       */
+      function handlePlayClick() {
+        if (isStarted) return;
+        isStarted = true;
+        targetSpeedFactor = 1.3;
+
+        startOverlay.classList.add('slide-up');
+        hudBar.classList.add('visible');
+        nowPlayingPill.classList.add('visible');
+
+        bgMusic.volume = 1.0;
+        bgMusic.muted = false;
+
+        const p = bgMusic.play();
+        if (p !== undefined) {
+          p.catch(() => {});
+        }
+      }
+
+      function toggleMute() {
+        isMuted = !isMuted;
+        bgMusic.muted = isMuted;
+        if (isMuted) {
+          muteIcon.textContent = '🔇';
+          muteText.textContent = 'MUTED';
+        } else {
+          muteIcon.textContent = '🔊';
+          muteText.textContent = 'SOUND ON';
+          if (bgMusic.paused) {
+            bgMusic.play().catch(() => {});
+          }
+        }
+      }
+
+      playBtn.addEventListener('click', handlePlayClick);
+      muteBtn.addEventListener('click', toggleMute);
+
+      window.onload = function () {
+        prevTime = performance.now();
+        requestAnimationFrame(animate);
+      };
+    })();
+  </script>
+</body>
+</html>
+```
